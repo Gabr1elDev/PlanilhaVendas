@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Controle Financeiro 2.0</title>
+   
+    <!-- Fonte -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-light: #e0e7ff;
+            --success: #10b981;
+            --success-light: #d1fae5;
+            --danger: #ef4444;
+            --danger-light: #fee2e2;
+            --dark: #1f2937;
+            --gray: #6b7280;
+            --bg: #f3f4f6;
+            --white: #ffffff;
+            --border: #e5e7eb;
+            --radius: 12px;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        /* --- MODO ESCURO (Variáveis) --- */
+        body.dark-mode {
+            --bg: #111827;        /* Fundo muito escuro */
+            --white: #1f2937;     /* Fundo dos cards (cinza escuro) */
+            --dark: #f3f4f6;      /* Texto principal (claro) */
+            --gray: #9ca3af;      /* Texto secundário (cinza claro) */
+            --primary-light: #312e81; /* Primary background mais escuro */
+            --success-light: #064e3b; /* Fundo verde mais escuro */
+            --danger-light: #7f1d1d;  /* Fundo vermelho mais escuro */
+            --border: #374151;    /* Bordas mais escuras */
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+        }
+
+        /* Ajustes específicos para Modo Escuro */
+        body.dark-mode input,
+        body.dark-mode select {
+            background-color: #374151;
+            color: #ffffff;
+            border-color: #4b5563;
+        }
+        body.dark-mode .day:hover {
+            background-color: var(--primary-light);
+        }
+        body.dark-mode .dashboard-section {
+            background-color: #1f2937; 
+            border-color: var(--border);
+        }
+        body.dark-mode .tag.venda { color: #6ee7b7; } /* Texto verde mais claro p/ ler no escuro */
+        body.dark-mode .tag.gasto { color: #fca5a5; } /* Texto vermelho mais claro p/ ler no escuro */
+
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            margin: 0;
+            padding: 20px 10px;
+            color: var(--dark);
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* BOTÃO TEMA */
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background-color: var(--white);
+            color: var(--dark);
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: var(--shadow);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        .theme-toggle:hover {
+            transform: scale(1.1);
+            background-color: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: var(--white);
+            padding: 25px;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            transition: background 0.3s;
+        }
+
+        h1 { text-align: center; color: var(--primary); margin-top: 0; font-weight: 800; letter-spacing: -0.5px; }
+        h2, h3 { color: var(--dark); margin: 0; }
+       
+        /* --- CALENDÁRIO --- */
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            background: var(--white);
+            padding: 15px;
+            border-radius: var(--radius);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border: 1px solid var(--border);
+        }
+
+        .calendar-controls button {
+            background: var(--primary-light);
+            color: var(--primary);
+            border: none;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .calendar-controls button:hover { background: var(--primary); color: white; }
+
+        .calendar-title {
+            font-weight: 700;
+            font-size: 1.2rem;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        select {
+            padding: 5px 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            font-family: inherit;
+            font-size: 1rem;
+            cursor: pointer;
+            background-color: var(--white);
+            color: var(--dark);
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 8px;
+            margin-bottom: 30px;
+        }
+
+        .day-label {
+            text-align: center;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: var(--gray);
+            text-transform: uppercase;
+        }
+
+        .day {
+            aspect-ratio: 1;
+            border: 1px solid var(--bg);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            position: relative;
+            background: var(--white); /* Alterado de white para var */
+            transition: all 0.2s;
+            font-weight: 500;
+            color: var(--dark);
+        }
+
+        .day:hover { background-color: var(--primary-light); color: var(--primary); transform: translateY(-2px); }
+       
+        .day.selected {
+            background-color: var(--primary);
+            color: white;
+            box-shadow: 0 4px 6px rgba(79, 70, 229, 0.4);
+            border: none;
+        }
+
+        .day.empty { background: transparent; border: none; cursor: default; }
+       
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            position: absolute;
+            bottom: 6px;
+        }
+        .dot-green { background-color: var(--success); }
+        .dot-red { background-color: var(--danger); }
+        .day.selected .status-dot { background-color: white; }
+
+        /* --- DASHBOARD --- */
+        .dashboard-section {
+            background-color: #f9fafb; /* No modo claro */
+            border-radius: var(--radius);
+            padding: 20px;
+            border: 1px solid var(--border);
+            animation: fadeIn 0.3s ease-in-out;
+            transition: background-color 0.3s;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 10px;
+        }
+       
+        .section-title { font-size: 1.1rem; font-weight: 700; color: var(--gray); display: flex; align-items: center; gap: 8px; }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: var(--white); /* Alterado para var */
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            border: 1px solid var(--border);
+            color: var(--dark);
+        }
+
+        .card.highlight { background: var(--primary-light); border-color: #c7d2fe; }
+       
+        .card-label { font-size: 0.85rem; color: var(--gray); display: block; margin-bottom: 5px; text-transform: uppercase; font-weight: 600; }
+        .card-value { font-size: 1.25rem; font-weight: 800; display: block; }
+       
+        .text-green { color: var(--success); }
+        .text-red { color: var(--danger); }
+        .text-blue { color: var(--primary); }
+
+        /* --- INPUTS --- */
+        .forms-area {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .input-box {
+            background: var(--white); /* Alterado para var */
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+
+        .input-box.sales { border-top: 4px solid var(--success); }
+        .input-box.expenses { border-top: 4px solid var(--danger); }
+
+        .form-row { display: flex; gap: 10px; margin-bottom: 10px; }
+       
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            outline: none;
+            transition: 0.2s;
+        }
+        input:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-light); }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+        .btn:active { transform: scale(0.98); }
+        .btn-add-venda { background-color: var(--success); }
+        .btn-add-venda:hover { background-color: #059669; }
+        .btn-add-gasto { background-color: var(--danger); }
+        .btn-add-gasto:hover { background-color: #dc2626; }
+
+        /* --- LISTA DE TRANSAÇÕES --- */
+        .history-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+       
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--white); /* Alterado para var */
+            padding: 10px 15px;
+            margin-bottom: 8px;
+            border-radius: 8px;
+            border: 1px solid var(--bg);
+            font-size: 0.9rem;
+            color: var(--dark);
+        }
+        .history-item:hover { border-color: var(--border); }
+
+        .item-info { display: flex; align-items: center; gap: 10px; }
+        .tag { padding: 3px 8px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; text-transform: uppercase; }
+        .tag.venda { background: var(--success-light); color: #065f46; }
+        .tag.gasto { background: var(--danger-light); color: #991b1b; }
+
+        .btn-delete {
+            background: transparent;
+            color: var(--gray);
+            border: none;
+            cursor: pointer;
+            padding: 5px;
+            font-size: 1.1rem;
+        }
+        .btn-delete:hover { color: var(--danger); }
+
+        /* --- BACKUP SECTION --- */
+        .backup-section {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px dashed var(--border);
+            text-align: center;
+        }
+        .backup-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 10px;
+        }
+        .btn-backup {
+            width: auto;
+            background-color: var(--dark);
+            color: var(--bg); /* Inverte cor texto button backup */
+            font-size: 0.9rem;
+            padding: 10px 20px;
+        }
+        .btn-restore {
+            width: auto;
+            background-color: var(--gray);
+            font-size: 0.9rem;
+            padding: 10px 20px;
+        }
+
+        /* --- MEDIA QUERIES --- */
+        @media (max-width: 600px) {
+            .forms-area, .cards-grid { grid-template-columns: 1fr; }
+            .calendar-grid { gap: 4px; }
+            .day { font-size: 0.9rem; }
+            .theme-toggle { width: 40px; height: 40px; font-size: 1.2rem; top: 10px; right: 10px; }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--gray); border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+<!-- BOTÃO MODO ESCURO -->
+<button id="btnTheme" class="theme-toggle" onclick="toggleTheme()" title="Alternar Tema">
+    🌙
+</button>
+
+<div class="container">
+    <h1>Controle Financeiro 2.0 🚀</h1>
+
+    <!-- CALENDÁRIO -->
+    <div class="calendar-header">
+        <div class="calendar-controls">
+            <button onclick="mudarMes(-1)">❮</button>
+        </div>
+        <div class="calendar-title">
+            <span id="labelMes">Dezembro</span>
+            <select id="selectAno" onchange="mudarAno(this.value)">
+                <!-- Anos gerados via JS -->
+            </select>
+        </div>
+        <div class="calendar-controls">
+            <button onclick="mudarMes(1)">❯</button>
+        </div>
+    </div>
+
+    <div class="calendar-grid" id="calendarGrid">
+    </div>
+
+    <!-- PAINEL DO DIA -->
+    <div class="dashboard-section">
+        <div class="section-header">
+            <div class="section-title">📅 Detalhes: <span id="displayData" style="color: var(--primary); margin-left: 5px;">--/--/----</span></div>
+        </div>
+       
+        <!-- CARDS RESUMO DIA -->
+        <div class="cards-grid">
+            <div class="card highlight">
+                <span class="card-label">Lucro do Dia</span>
+                <span class="card-value text-blue" id="cardLucro">R$ 0,00</span>
+            </div>
+            <div class="card">
+                <span class="card-label">Total Vendas</span>
+                <span class="card-value text-green" id="cardVendas">R$ 0,00</span>
+            </div>
+            <div class="card">
+                <span class="card-label">Total Gastos</span>
+                <span class="card-value text-red" id="cardGastos">R$ 0,00</span>
+            </div>
+        </div>
+
+        <!-- FORMULÁRIOS -->
+        <div class="forms-area">
+            <!-- Vendas -->
+            <div class="input-box sales">
+                <h3>+ Nova Venda</h3>
+                <div style="margin-top: 10px;">
+                    <input type="number" id="inputVendaValor" placeholder="Valor (R$)" step="0.01">
+                    <div class="form-row" style="margin-top: 10px;">
+                        <select id="inputVendaMetodo">
+                            <option value="Dinheiro">💵 Dinheiro</option>
+                            <option value="Pix">💠 Pix</option>
+                            <option value="Débito">💳 Débito</option>
+                            <option value="Crédito">💳 Crédito</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-add-venda" onclick="addTransacao('venda')">Adicionar Venda</button>
+                </div>
+            </div>
+
+            <!-- Gastos -->
+            <div class="input-box expenses">
+                <h3>- Novo Gasto</h3>
+                <div style="margin-top: 10px;">
+                    <input type="number" id="inputGastoValor" placeholder="Valor (R$)" step="0.01">
+                    <div class="form-row" style="margin-top: 10px;">
+                        <select id="inputGastoTipo">
+                            <option value="Mercadoria">📦 Mercadoria</option>
+                            <option value="Transporte">🚌 Transporte</option>
+                            <option value="Alimentação">🍔 Alimentação</option>
+                            <option value="Outros">⚙️ Outros</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-add-gasto" onclick="addTransacao('gasto')">Adicionar Gasto</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- HISTÓRICO DO DIA -->
+        <div style="margin-top: 20px;">
+            <h3 style="margin-bottom: 10px; font-size: 1rem; color: var(--gray);">📝 Histórico do Dia</h3>
+            <ul id="listaTransacoes" class="history-list">
+                <li style="text-align: center; color: var(--gray); padding: 10px;">Nenhuma transação neste dia.</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- RESUMO MENSAL -->
+    <!-- Forcei style inline aqui para usar var(--primary-light) no JS ou CSS, mas deixei com classe para facilitar o tema -->
+    <div class="dashboard-section" id="resumoMensalSection" style="margin-top: 25px; border-color: #c7d2fe;">
+        <div class="section-title">📊 Resumo do Mês (<span id="lblResumoMes">--</span>)</div>
+        <div class="cards-grid" style="margin-top: 15px; margin-bottom: 0;">
+            <div class="card">
+                <span class="card-label">Lucro Mensal</span>
+                <span class="card-value text-blue" id="mesLucro">R$ 0,00</span>
+            </div>
+            <div class="card">
+                <span class="card-label">Faturamento</span>
+                <span class="card-value text-green" id="mesFaturamento">R$ 0,00</span>
+            </div>
+            <div class="card">
+                <span class="card-label">Gastos Totais</span>
+                <span class="card-value text-red" id="mesGastos">R$ 0,00</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ÁREA DE BACKUP E SEGURANÇA -->
+    <div class="backup-section">
+        <h3 style="font-size: 1rem; color: var(--gray);">🔐 Área de Segurança</h3>
+        <p style="font-size: 0.8rem; color: var(--gray); margin-bottom: 10px;">Seus dados são salvos automaticamente no navegador. Use os botões abaixo para fazer uma cópia de segurança.</p>
+        <div class="backup-controls">
+            <button class="btn btn-backup" onclick="baixarBackup()">⬇️ Baixar Backup</button>
+            <button class="btn btn-restore" onclick="document.getElementById('fileInput').click()">⬆️ Restaurar Backup</button>
+            <input type="file" id="fileInput" style="display: none;" onchange="restaurarBackup(this)" accept=".json">
+        </div>
+    </div>
+
+</div>
+
+<script>
+    /* --- LÓGICA DO TEMA (NOVO) --- */
+    function toggleTheme() {
+        const body = document.body;
+        const btn = document.getElementById('btnTheme');
+       
+        body.classList.toggle('dark-mode');
+       
+        // Verifica se está no modo escuro para trocar o ícone
+        if (body.classList.contains('dark-mode')) {
+            btn.innerText = '☀️'; // Sol para voltar ao claro
+            // Ajuste fino para a section do resumo mensal ficar bonita no escuro
+            document.getElementById('resumoMensalSection').style.background = 'var(--white)';
+        } else {
+            btn.innerText = '🌙'; // Lua para ir ao escuro
+            document.getElementById('resumoMensalSection').style.background = '#eef2ff';
+        }
+
+        // (Opcional) Salvar preferência no navegador
+        localStorage.setItem('temaFinanceiro', body.classList.contains('dark-mode') ? 'dark' : 'light');
+    }
+
+    // Carregar tema salvo ao iniciar
+    const temaSalvo = localStorage.getItem('temaFinanceiro');
+    if (temaSalvo === 'dark') {
+        toggleTheme(); // Já ativa se estava salvo
+    }
+
+
+    /* --- LÓGICA DO SISTEMA (EXISTENTE) --- */
+    let bancoDados = {};
+    const STORAGE_KEY = 'financas_v2_banco';
+
+    let anoAtual = new Date().getFullYear();
+    let mesAtual = new Date().getMonth();
+    let diaSelecionado = null;
+
+    const nomesMeses = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+    const diasSemana = ["D", "S", "T", "Q", "Q", "S", "S"];
+
+    window.onload = function() {
+        carregarDados();
+        preencherSelectAnos();
+       
+        // Verifica tema salvo (redundante mas garante ordem de execução)
+        if(localStorage.getItem('temaFinanceiro') === 'dark' && !document.body.classList.contains('dark-mode')) {
+             toggleTheme();
+        }
+
+        const hoje = new Date();
+        anoAtual = hoje.getFullYear();
+        mesAtual = hoje.getMonth();
+       
+        renderizarCalendario();
+        selecionarDia(formatarDataChave(anoAtual, mesAtual, hoje.getDate()));
+        document.getElementById('selectAno').value = anoAtual;
+    };
+
+    function preencherSelectAnos() {
+        const select = document.getElementById('selectAno');
+        select.innerHTML = '';
+        for(let i = 2024; i <= 2030; i++) {
+            const opt = document.createElement('option');
+            opt.value = i;
+            opt.innerText = i;
+            select.appendChild(opt);
+        }
+    }
+
+    /* --- CALENDÁRIO --- */
+    function renderizarCalendario() {
+        const grid = document.getElementById('calendarGrid');
+        grid.innerHTML = '';
+
+        document.getElementById('labelMes').innerText = nomesMeses[mesAtual];
+        document.getElementById('lblResumoMes').innerText = `${nomesMeses[mesAtual]} / ${anoAtual}`;
+
+        diasSemana.forEach(d => {
+            const div = document.createElement('div');
+            div.className = 'day-label';
+            div.innerText = d;
+            grid.appendChild(div);
+        });
+
+        const primeiroDiaSemana = new Date(anoAtual, mesAtual, 1).getDay();
+        const ultimoDiaMes = new Date(anoAtual, mesAtual + 1, 0).getDate();
+
+        for(let i=0; i<primeiroDiaSemana; i++) {
+            const empty = document.createElement('div');
+            empty.className = 'day empty';
+            grid.appendChild(empty);
+        }
+
+        for(let dia=1; dia<=ultimoDiaMes; dia++) {
+            const dataChave = formatarDataChave(anoAtual, mesAtual, dia);
+            const el = document.createElement('div');
+            el.className = 'day';
+            el.innerText = dia;
+
+            if(dataChave === diaSelecionado) el.classList.add('selected');
+
+            if(bancoDados[dataChave] && bancoDados[dataChave].length > 0) {
+                const dot = document.createElement('div');
+                dot.className = 'status-dot';
+                const saldo = calcularSaldoDia(bancoDados[dataChave]);
+                if(saldo.lucro >= 0) dot.classList.add('dot-green');
+                else dot.classList.add('dot-red');
+                el.appendChild(dot);
+            }
+
+            el.onclick = () => selecionarDia(dataChave);
+            grid.appendChild(el);
+        }
+        calcularTotaisMensais();
+    }
+
+    function mudarMes(dir) {
+        mesAtual += dir;
+        if(mesAtual > 11) { mesAtual = 0; anoAtual++; }
+        if(mesAtual < 0) { mesAtual = 11; anoAtual--; }
+        document.getElementById('selectAno').value = anoAtual;
+        renderizarCalendario();
+        selecionarDia(formatarDataChave(anoAtual, mesAtual, 1));
+    }
+
+    function mudarAno(ano) {
+        anoAtual = parseInt(ano);
+        renderizarCalendario();
+        selecionarDia(formatarDataChave(anoAtual, mesAtual, 1));
+    }
+
+    function selecionarDia(data) {
+        diaSelecionado = data;
+        const partes = data.split('-');
+        document.getElementById('displayData').innerText = `${partes[2]}/${partes[1]}/${partes[0]}`;
+        atualizarPainelDia();
+        renderizarCalendario();
+    }
+
+    /* --- TRANSAÇÕES --- */
+    function addTransacao(tipo) {
+        if(!diaSelecionado) return alert("Selecione um dia!");
+
+        let valor = 0;
+        let categoria = '';
+        let inputValorRef;
+
+        if(tipo === 'venda') {
+            inputValorRef = document.getElementById('inputVendaValor');
+            valor = parseFloat(inputValorRef.value);
+            categoria = document.getElementById('inputVendaMetodo').value;
+        } else {
+            inputValorRef = document.getElementById('inputGastoValor');
+            valor = parseFloat(inputValorRef.value);
+            categoria = document.getElementById('inputGastoTipo').value;
+        }
+
+        if(isNaN(valor) || valor <= 0) return alert("Digite um valor válido!");
+
+        const novaTransacao = {
+            id: Date.now(),
+            tipo: tipo,
+            categoria: categoria,
+            valor: valor
+        };
+
+        if(!bancoDados[diaSelecionado]) bancoDados[diaSelecionado] = [];
+        bancoDados[diaSelecionado].push(novaTransacao);
+
+        salvarDados();
+        inputValorRef.value = '';
+        inputValorRef.focus();
+       
+        atualizarPainelDia();
+        renderizarCalendario();
+    }
+
+    function removerTransacao(id) {
+        if(!confirm("Tem certeza que deseja excluir este item?")) return;
+        if(bancoDados[diaSelecionado]) {
+            bancoDados[diaSelecionado] = bancoDados[diaSelecionado].filter(t => t.id !== id);
+            if(bancoDados[diaSelecionado].length === 0) delete bancoDados[diaSelecionado];
+           
+            salvarDados();
+            atualizarPainelDia();
+            renderizarCalendario();
+        }
+    }
+
+    /* --- CÁLCULOS E UI --- */
+    function calcularSaldoDia(listaTransacoes) {
+        let totalVendas = 0;
+        let totalGastos = 0;
+        if(listaTransacoes) {
+            listaTransacoes.forEach(t => {
+                if(t.tipo === 'venda') totalVendas += t.valor;
+                else totalGastos += t.valor;
+            });
+        }
+        return { vendas: totalVendas, gastos: totalGastos, lucro: totalVendas - totalGastos };
+    }
+
+    function atualizarPainelDia() {
+        const transacoes = bancoDados[diaSelecionado] || [];
+        const saldo = calcularSaldoDia(transacoes);
+
+        document.getElementById('cardVendas').innerText = formatarMoeda(saldo.vendas);
+        document.getElementById('cardGastos').innerText = formatarMoeda(saldo.gastos);
+        document.getElementById('cardLucro').innerText = formatarMoeda(saldo.lucro);
+
+        const ul = document.getElementById('listaTransacoes');
+        ul.innerHTML = '';
+
+        if(transacoes.length === 0) {
+            ul.innerHTML = '<li style="text-align: center; color: var(--gray); padding: 10px;">Nenhuma transação neste dia.</li>';
+        } else {
+            transacoes.forEach(t => {
+                const li = document.createElement('li');
+                li.className = 'history-item';
+                const classeTag = t.tipo === 'venda' ? 'venda' : 'gasto';
+                const sinal = t.tipo === 'venda' ? '+' : '-';
+                const corValor = t.tipo === 'venda' ? 'var(--success)' : 'var(--danger)';
+                li.innerHTML = `
+                    <div class="item-info">
+                        <span class="tag ${classeTag}">${t.tipo}</span>
+                        <span>${t.categoria}</span>
+                    </div>
+                    <div class="item-info">
+                        <strong style="color: ${corValor}">${sinal} ${formatarMoeda(t.valor)}</strong>
+                        <button class="btn-delete" onclick="removerTransacao(${t.id})" title="Excluir">🗑️</button>
+                    </div>
+                `;
+                ul.appendChild(li);
+            });
+        }
+        calcularTotaisMensais();
+    }
+
+    function calcularTotaisMensais() {
+        let somaVendas = 0;
+        let somaGastos = 0;
+        const prefixo = formatarDataChave(anoAtual, mesAtual, 1).substring(0, 7);
+        for(const data in bancoDados) {
+            if(data.startsWith(prefixo)) {
+                const saldoDia = calcularSaldoDia(bancoDados[data]);
+                somaVendas += saldoDia.vendas;
+                somaGastos += saldoDia.gastos;
+            }
+        }
+        document.getElementById('mesFaturamento').innerText = formatarMoeda(somaVendas);
+        document.getElementById('mesGastos').innerText = formatarMoeda(somaGastos);
+        document.getElementById('mesLucro').innerText = formatarMoeda(somaVendas - somaGastos);
+    }
+
+    /* --- UTILITÁRIOS E PERSISTÊNCIA --- */
+    function formatarMoeda(val) {
+        return val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    }
+
+    function formatarDataChave(ano, mes, dia) {
+        const m = (mes + 1).toString().padStart(2, '0');
+        const d = dia.toString().padStart(2, '0');
+        return `${ano}-${m}-${d}`;
+    }
+
+    function salvarDados() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(bancoDados));
+    }
+
+    function carregarDados() {
+        const salvos = localStorage.getItem(STORAGE_KEY);
+        if(salvos) bancoDados = JSON.parse(salvos);
+    }
+
+    /* --- FUNÇÕES DE BACKUP --- */
+    function baixarBackup() {
+        const dadosStr = JSON.stringify(bancoDados);
+        const blob = new Blob([dadosStr], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+       
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `backup_financeiro_${new Date().toISOString().slice(0,10)}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    }
+
+    function restaurarBackup(input) {
+        const file = input.files[0];
+        if(!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const dados = JSON.parse(e.target.result);
+                if(confirm("Isso irá substituir os dados atuais pelos dados do arquivo. Deseja continuar?")) {
+                    bancoDados = dados;
+                    salvarDados();
+                    renderizarCalendario();
+                    selecionarDia(formatarDataChave(anoAtual, mesAtual, 1));
+                    alert("Dados restaurados com sucesso!");
+                }
+            } catch(err) {
+                alert("Erro ao ler o arquivo. Certifique-se de que é um backup válido.");
+            }
+        };
+        reader.readAsText(file);
+    }
+
+</script>
+
+</body>
+</html>
